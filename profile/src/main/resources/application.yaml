@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: "profile"
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: ms-customer
+
+server:
+  port: 8071
