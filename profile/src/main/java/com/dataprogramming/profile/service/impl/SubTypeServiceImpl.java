@@ -37,10 +37,8 @@ public class SubTypeServiceImpl implements SubTypeService {
     @Override
     public Mono<Boolean> delete(String id) {
         return subTypeRepository.findById(id)
-                .flatMap(
-                        delete -> subTypeRepository.delete(delete)
-                                .then(Mono.just(Boolean.TRUE))
-                )
+                .flatMap(delete ->
+                        subTypeRepository.delete(delete).then(Mono.just(Boolean.TRUE)))
                 .defaultIfEmpty(Boolean.FALSE);
     }
 }

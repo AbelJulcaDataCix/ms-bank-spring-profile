@@ -1,6 +1,6 @@
 package com.dataprogramming.profile.entity;
 
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,9 +16,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubType {
+
     @Id
     private String id;
-    @Valid
+    @NotNull(message = "The 'value' field cannot be null")
     private EnumSubType value;
 
     public enum EnumSubType{
