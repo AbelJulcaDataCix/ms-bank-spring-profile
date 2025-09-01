@@ -23,7 +23,7 @@ public class TypeCustomer {
 
     private SubType subType;
 
-    enum EnumTypeCustomer {
+    public enum EnumTypeCustomer {
         BUSINESS, PERSONAL
     }
 }
