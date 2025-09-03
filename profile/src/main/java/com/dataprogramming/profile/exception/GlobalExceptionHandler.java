@@ -13,18 +13,18 @@ import org.springframework.web.server.ServerWebInputException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ServerWebInputException.class)
-    public ResponseEntity<ApiException> handleServerWebInputException(ServerWebInputException ex) {
+    public ResponseEntity<ControlError> handleServerWebInputException(ServerWebInputException ex) {
         log.error("Error in request body: {}", ex.getReason(), ex);
         String errorMessage = "Request body is invalid or malformed.";
-        ApiException apiError = new ApiException(errorMessage, HttpStatus.BAD_REQUEST);
+        ControlError apiError = new ControlError(errorMessage, HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
-    public ResponseEntity<ApiException> handleWebExchangeBindException(WebExchangeBindException ex) {
+    public ResponseEntity<ControlError> handleWebExchangeBindException(WebExchangeBindException ex) {
         log.error("Validation failed: {}", ex.getBindingResult().getAllErrors().get(0).getDefaultMessage(), ex);
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        ApiException apiError = new ApiException(errorMessage, HttpStatus.BAD_REQUEST);
+        ControlError apiError = new ControlError(errorMessage, HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
