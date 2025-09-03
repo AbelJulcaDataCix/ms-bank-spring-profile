@@ -3,9 +3,7 @@ spring:
     name: "profile"
   data:
     mongodb:
-      host: localhost
-      port: 27017
-      database: ms-customer
+      uri: mongodb://admin:secret@mongo-server:27017/ms-customer
 
 server:
   port: 8071

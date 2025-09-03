@@ -1,0 +1,26 @@
+# IMAGEN MODELO
+FROM eclipse-temurin:17.0.16_8-jdk
+
+# DEFINIR DIRECTORIO RAIZ DE NUESTRO CONTENEDOR
+WORKDIR /root
+
+# COPIAR Y PEGAR ARCHIVOS DENTRO DEL CONTENEDOR
+COPY ./pom.xml /root
+COPY ./.mvn /root/.mvn
+COPY ./mvnw /root
+
+# DESCARGAR DEPENDENCIAS
+RUN ./mvnw dependency:go-offline
+
+# COPIAR EL CODIGO FUENTE DENTRO DEL CONTENEDOR
+COPY ./src /root/src
+
+# CONTRUIR NUESTRA APLICACION
+RUN ./mvnw clean install
+
+# LEVANTAR NUESTRA APLICACION CUANDO EL CONTENEDOR INICIE
+ENTRYPOINT ["java","-jar","/root/target/profile-1.0.0-SNAPSHOT.jar"]
+
+
+
+
