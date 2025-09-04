@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   mongo-server:
     image: mongo:latest
     container_name: mongo-server
@@ -30,7 +29,8 @@ services:
     depends_on:
       - mongo-server
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:secret@mongo-server:27017/ms-customer
+      # Modifica esta línea para incluir authSource
+      SPRING_DATA_MONGODB_URI: mongodb://admin:secret@mongo-server:27017/ms-customer?authSource=admin
 
   mongo-client:
     image: mongo-express:latest
@@ -39,7 +39,7 @@ services:
     depends_on:
       - mongo-server
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://admin:secret@mongo-server:27017/ms-customer
+      ME_CONFIG_MONGODB_URL: mongodb://admin:secret@mongo-server:27017/ms-customer?authSource=admin
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: pass
     ports:
