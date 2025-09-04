@@ -2,6 +2,11 @@ package com.dataprogramming.profile.controller;
 
 import com.dataprogramming.profile.entity.SubType;
 import com.dataprogramming.profile.service.SubTypeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +29,35 @@ import reactor.core.publisher.Mono;
 @RefreshScope
 @RestController
 @RequestMapping("/subtype")
+@Tag(name = "SubType", description = "Controller for SubType")
 public class SubTypeController {
 
     @Autowired
     private SubTypeService subTypeService;
 
+    @Operation(
+            summary = "Create sub type for type of customer",
+            description = "Used for create sub type for type of customer.",
+            tags = {"SubType"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Declare type of sub type",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = SubType.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Successful create",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SubType.class)
+                            )
+                    )
+            }
+    )
     @PostMapping("/create")
     public Mono<ResponseEntity<SubType>> create(@Valid @RequestBody SubType subType) {
         return subTypeService.create(subType)
