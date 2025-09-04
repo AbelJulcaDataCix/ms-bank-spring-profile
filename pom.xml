@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.dataprogramming</groupId>
 	<artifactId>profile</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>profile</name>
 	<description>Microservice to management profile of client</description>
 	<url/>
@@ -29,6 +29,16 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<sonar.projectKey>SpringApp</sonar.projectKey>
+		<sonar.projectName>SpringApp</sonar.projectName>
+		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.minimum.coverage>0.45</sonar.minimum.coverage>
+		<sonar.coverage.exclusions>
+			**/com/dataprogramming/profile/config/SwaggerConfig.*,
+			**/com/dataprogramming/profile/entity/**,
+			**/com/dataprogramming/profile/ProfileApplication.*
+		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -61,12 +71,25 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<!-- Excluir junit 4 -->
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.8.12</version>
+		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -105,6 +128,68 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.10.0.2594</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<executions>
+					<!-- Agente Jacoco -->
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+
+					<!-- Reporte con exclusiones -->
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/com/dataprogramming/profile/config/*</exclude>
+								<exclude>**/com/dataprogramming/profile/entity/*</exclude>
+								<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
+							</excludes>
+						</configuration>
+					</execution>
+
+					<!-- Validación Jacoco con reglas y exclusiones -->
+					<execution>
+						<id>check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>INSTRUCTION</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>${sonar.minimum.coverage}</minimum>
+										</limit>
+									</limits>
+									<excludes>
+										<exclude>**/com/dataprogramming/profile/config/*</exclude>
+										<exclude>**/com/dataprogramming/profile/entity/*</exclude>
+										<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
+									</excludes>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

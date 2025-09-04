@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  mongo-server:
+    image: mongo:latest
+    container_name: mongo-server
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: ms-customer
+    ports:
+      - "27017:27017"
+    networks:
+      - spring-network
+    volumes:
+      - mongodb-data:/data/db
+
+  spring-api-imagen-profile:
+    image: spring-api-imagen-profile
+    container_name: spring-api-profile-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8071:8071"
+    networks:
+      - spring-network
+    depends_on:
+      - mongo-server
+    environment:
+      # Modifica esta línea para incluir authSource
+      SPRING_DATA_MONGODB_URI: mongodb://admin:secret@mongo-server:27017/ms-customer?authSource=admin
+
+  mongo-client:
+    image: mongo-express:latest
+    container_name: mongo-client
+    restart: always
+    depends_on:
+      - mongo-server
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://admin:secret@mongo-server:27017/ms-customer?authSource=admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
+    ports:
+      - "8090:8081"
+    networks:
+      - spring-network
+
+networks:
+  spring-network:
+
+volumes:
+  mongodb-data:
