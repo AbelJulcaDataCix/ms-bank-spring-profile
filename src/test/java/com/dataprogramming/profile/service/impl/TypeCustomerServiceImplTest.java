@@ -4,8 +4,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import com.dataprogramming.profile.entity.CustomerType;
 import com.dataprogramming.profile.entity.SubType;
-import com.dataprogramming.profile.entity.TypeCustomer;
+import com.dataprogramming.profile.model.EnumCustomerType;
 import com.dataprogramming.profile.repository.TypeCustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,27 +29,27 @@ class TypeCustomerServiceImplTest {
     private SubTypeServiceImpl subTypeServiceImpl;
 
     @InjectMocks
-    private TypeCustomerServiceImpl typeCustomerService;
+    private CustomerTypeServiceImpl typeCustomerService;
 
-    private TypeCustomer typeCustomer;
+    private CustomerType typeCustomer;
 
     @BeforeEach
     void setUp() {
-        typeCustomer = new TypeCustomer();
+        typeCustomer = new CustomerType();
         typeCustomer.setId("1");
-        typeCustomer.setValue(TypeCustomer.EnumTypeCustomer.PERSONAL);
+        typeCustomer.setValue(EnumCustomerType.PERSONAL);
         typeCustomer.setSubType(new SubType());
     }
 
     @Test
     @DisplayName("Return Successful When Create TypeCustomer")
     void returnSuccessfulWhenCreateTypeCustomer() {
-        when(typeCustomerRepository.save(any(TypeCustomer.class))).thenReturn(Mono.just(typeCustomer));
+        when(typeCustomerRepository.save(any(CustomerType.class))).thenReturn(Mono.just(typeCustomer));
 
         StepVerifier.create(typeCustomerService.create(typeCustomer))
                 .expectNextMatches(savedTypeCustomer ->
                         savedTypeCustomer.getId().equals("1") &&
-                                savedTypeCustomer.getValue().equals(TypeCustomer.EnumTypeCustomer.PERSONAL))
+                                savedTypeCustomer.getValue().equals(EnumCustomerType.PERSONAL))
                 .verifyComplete();
     }
 
@@ -85,7 +86,7 @@ class TypeCustomerServiceImplTest {
     @Test
     @DisplayName("Return Successful When Update TypeCustomer")
     void returnSuccessfulWhenUpdateTypeCustomer() {
-        when(typeCustomerRepository.save(any(TypeCustomer.class))).thenReturn(Mono.just(typeCustomer));
+        when(typeCustomerRepository.save(any(CustomerType.class))).thenReturn(Mono.just(typeCustomer));
 
         StepVerifier.create(typeCustomerService.update(typeCustomer))
                 .expectNextMatches(updatedTypeCustomer -> updatedTypeCustomer.getId().equals("1"))
@@ -96,7 +97,7 @@ class TypeCustomerServiceImplTest {
     @DisplayName("Return Successful When Delete TypeCustomer")
     void returnSuccessfulWhenDeleteTypeCustomer() {
         when(typeCustomerRepository.findById("1")).thenReturn(Mono.just(typeCustomer));
-        when(typeCustomerRepository.delete(any(TypeCustomer.class))).thenReturn(Mono.empty());
+        when(typeCustomerRepository.delete(any(CustomerType.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(typeCustomerService.delete("1"))
                 .expectNext(true)

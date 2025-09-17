@@ -1,0 +1,18 @@
+package com.dataprogramming.profile.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CustomerTypeResponse {
+    private String id;
+    private String value;
+    private SubTypeResponse subType;
+}

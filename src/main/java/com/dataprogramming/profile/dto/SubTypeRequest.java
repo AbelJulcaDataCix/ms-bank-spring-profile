@@ -1,24 +1,18 @@
-package com.dataprogramming.profile.entity;
+package com.dataprogramming.profile.dto;
 
 import com.dataprogramming.profile.model.EnumSubType;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @Setter
-@Builder
-@Document("SubType")
-@AllArgsConstructor
 @NoArgsConstructor
-public class SubType {
-    @Id
-    private String id;
+@AllArgsConstructor
+public class SubTypeRequest {
+
     @NotNull(message = "The 'value' field cannot be null")
     private EnumSubType value;
 }

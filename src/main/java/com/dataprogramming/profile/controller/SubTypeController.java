@@ -1,6 +1,10 @@
 package com.dataprogramming.profile.controller;
 
+import com.dataprogramming.profile.dto.SubTypeRequest;
+import com.dataprogramming.profile.dto.SubTypeResponse;
+import com.dataprogramming.profile.dto.SubTypeUpdateRequest;
 import com.dataprogramming.profile.entity.SubType;
+import com.dataprogramming.profile.mapper.SubTypeMapper;
 import com.dataprogramming.profile.service.SubTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,6 +38,7 @@ import reactor.core.publisher.Mono;
 public class SubTypeController {
 
     private final SubTypeService subTypeService;
+    private final SubTypeMapper subTypeMapper;
 
     @Operation(
             summary = "Create sub type for type of customer",
@@ -59,35 +64,33 @@ public class SubTypeController {
             }
     )
     @PostMapping("/create")
-    public Mono<ResponseEntity<SubType>> create(@Valid @RequestBody SubType subType) {
-        return subTypeService.create(subType)
+    public Mono<ResponseEntity<SubTypeResponse>> create(@Valid @RequestBody SubTypeRequest subTypeRequest) {
+        return subTypeService.create(subTypeRequest)
+                .map(subTypeMapper::toSubTypeResponse)
                 .map(savedSubType -> new ResponseEntity<>(savedSubType, HttpStatus.CREATED))
                 .doOnSuccess(subTypeResponse -> log.info("SubType create successful"))
                 .doOnError(throwable -> log.error("error: ", throwable));
     }
 
     @PutMapping("/update")
-    public Mono<ResponseEntity<SubType>> update(@Valid @RequestBody SubType subType) {
-        return subTypeService.findById(subType.getId())
+    public Mono<ResponseEntity<SubTypeResponse>> update(@Valid @RequestBody SubTypeUpdateRequest subTypeUpdateRequest) {
+        return subTypeService.findById(subTypeUpdateRequest.getId())
                 .flatMap(existingSubType -> {
-                    existingSubType.setValue(subType.getValue());
+                    existingSubType.setValue(subTypeUpdateRequest.getValue());
                     return subTypeService.update(existingSubType)
-                            .map(updatedSubType -> new ResponseEntity<>(updatedSubType, HttpStatus.OK));
+                            .map(subTypeMapper::toSubTypeResponse)
+                            .map(response -> new ResponseEntity<>(response, HttpStatus.OK));
                 })
                 .switchIfEmpty(Mono.just(new ResponseEntity<>(HttpStatus.NOT_FOUND)))
-                .doOnSuccess(response -> {
-                    log.info("Update operation complete. Status: {}", response.getStatusCode());
-                })
-                .doOnError(throwable -> {
-                    log.error("Error during update operation: ", throwable);
-                });
+                .doOnSuccess(response -> log.info("Update operation complete. Status: {}", response.getStatusCode()))
+                .doOnError(throwable -> log.error("Error during update operation: ", throwable));
     }
 
     @DeleteMapping("/delete/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable String id) {
         return subTypeService.delete(id)
                 .flatMap(isDeleted -> {
-                    if (isDeleted) {
+                    if (Boolean.TRUE.equals(isDeleted)) {
                         return Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT));
                     } else {
                         log.warn("not find object for delete");
@@ -109,13 +112,14 @@ public class SubTypeController {
     }
 
     @GetMapping("/find/{id}")
-    public Mono<ResponseEntity<SubType>> findById(@PathVariable String id) {
+    public Mono<ResponseEntity<SubTypeResponse>> findById(@PathVariable String id) {
 
         if (!StringUtils.hasText(id)) {
             return Mono.just(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
         }
 
         return subTypeService.findById(id)
+                .map(subTypeMapper::toSubTypeResponse)
                 .map(subType -> new ResponseEntity<>(subType, HttpStatus.OK))
                 .switchIfEmpty(Mono.just(new ResponseEntity<>(HttpStatus.NOT_FOUND)))
                 .doOnSuccess(response -> log.info("Find operation successful with status: {}", response.getStatusCode()))
