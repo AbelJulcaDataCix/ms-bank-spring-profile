@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +28,12 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @RefreshScope
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/subtype")
 @Tag(name = "SubType", description = "Controller for SubType")
 public class SubTypeController {
 
-    @Autowired
-    private SubTypeService subTypeService;
+    private final SubTypeService subTypeService;
 
     @Operation(
             summary = "Create sub type for type of customer",
