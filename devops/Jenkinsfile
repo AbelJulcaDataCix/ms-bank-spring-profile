@@ -42,7 +42,7 @@ pipeline {
                         git pull origin main
                         git merge origin/develop --no-ff -m "Auto merge develop -> main by Jenkins"
 
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/AbelJulcaDataCix/ms-bank-spring-security.git main
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/AbelJulcaDataCix/ms-bank-spring-profile.git main
                     '''
                 }
             }
