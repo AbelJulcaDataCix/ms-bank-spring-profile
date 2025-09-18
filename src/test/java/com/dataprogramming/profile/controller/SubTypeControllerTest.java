@@ -1,9 +1,15 @@
 package com.dataprogramming.profile.controller;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import com.dataprogramming.profile.dto.SubTypeRequest;
+import com.dataprogramming.profile.dto.SubTypeResponse;
+import com.dataprogramming.profile.dto.SubTypeUpdateRequest;
 import com.dataprogramming.profile.entity.SubType;
+import com.dataprogramming.profile.mapper.SubTypeMapper;
+import com.dataprogramming.profile.model.EnumSubType;
 import com.dataprogramming.profile.service.SubTypeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,20 +35,30 @@ class SubTypeControllerTest {
     @Mock
     private SubTypeService subTypeService;
 
+    @Mock
+    private SubTypeMapper subTypeMapper;
+
     @Test
     @DisplayName("Return Successful When Create SubType")
     void returnSuccessfulWhenCreateSubType() {
 
-        SubType input = new SubType();
-        input.setValue(SubType.EnumSubType.NORMAL);
+        SubTypeRequest input = new SubTypeRequest();
+        input.setValue(EnumSubType.NORMAL);
 
         SubType saved = new SubType();
         saved.setId("68b1291b753821d691c59c79");
-        saved.setValue(SubType.EnumSubType.NORMAL);
+        saved.setValue(EnumSubType.NORMAL);
 
         when(subTypeService.create(any())).thenReturn(Mono.just(saved));
 
-        Mono<ResponseEntity<SubType>> responseMono = subTypeController.create(input);
+        when(subTypeMapper.toSubTypeResponse(any()))
+                .thenReturn(SubTypeResponse
+                        .builder()
+                        .id("68b1291b753821d691c59c79")
+                        .value("NORMAL")
+                        .build());
+
+        Mono<ResponseEntity<SubTypeResponse>> responseMono = subTypeController.create(input);
 
         StepVerifier.create(responseMono)
                 .expectNextMatches(response ->
@@ -56,13 +72,13 @@ class SubTypeControllerTest {
     @Test
     @DisplayName("return Error When Create SubType")
     void returnErrorWhenCreateSubType () {
-        SubType input = new SubType();
-        input.setValue(SubType.EnumSubType.VIP); // Valor válido
+        SubTypeRequest input = new SubTypeRequest();
+        input.setValue(EnumSubType.VIP); // Valor válido
 
         when(subTypeService.create(any()))
                 .thenReturn(Mono.error(new RuntimeException("Something went wrong")));
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.create(input);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.create(input);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable ->
@@ -76,14 +92,14 @@ class SubTypeControllerTest {
     @DisplayName("Return Internal Server Error When Service Failure")
     void returnInternalServerErrorWhenServiceFailure() {
 
-        SubType input = new SubType();
-        input.setValue(SubType.EnumSubType.VIP);
+        SubTypeRequest input = new SubTypeRequest();
+        input.setValue(EnumSubType.VIP);
 
         String errorMessage = "Database connection failed";
         when(subTypeService.create(any()))
                 .thenReturn(Mono.error(new RuntimeException(errorMessage)));
 
-        Mono<ResponseEntity<SubType>> responseMono = subTypeController.create(input);
+        Mono<ResponseEntity<SubTypeResponse>> responseMono = subTypeController.create(input);
 
         StepVerifier.create(responseMono)
                 .expectErrorMatches(throwable ->
@@ -99,23 +115,32 @@ class SubTypeControllerTest {
 
         SubType existing = new SubType();
         existing.setId("123");
-        existing.setValue(SubType.EnumSubType.NORMAL);
+        existing.setValue(EnumSubType.NORMAL);
 
         SubType updated = new SubType();
         updated.setId("123");
-        updated.setValue(SubType.EnumSubType.VIP);
+        updated.setValue(EnumSubType.VIP);
 
-        when(subTypeService.findById("123")).thenReturn(Mono.just(existing));
+        SubTypeUpdateRequest request = new SubTypeUpdateRequest();
+        request.setId("123");
+        request.setValue(EnumSubType.VIP);
+
+        when(subTypeService.findById(any())).thenReturn(Mono.just(existing));
         when(subTypeService.update(any(SubType.class))).thenReturn(Mono.just(updated));
+        when(subTypeMapper.toSubTypeResponse(any()))
+                .thenReturn(SubTypeResponse.builder()
+                        .id("123")
+                        .value("VIP")
+                        .build());
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.update(updated);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.update(request);
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
                         response.getStatusCode() == HttpStatus.OK &&
                                 response.getBody() != null &&
-                                response.getBody().getId().equals("123") &&
-                                response.getBody().getValue() == SubType.EnumSubType.VIP
+                                "123".equals(response.getBody().getId()) &&
+                                "VIP".equals(response.getBody().getValue())
                 )
                 .verifyComplete();
     }
@@ -126,13 +151,16 @@ class SubTypeControllerTest {
 
         SubType subType = new SubType();
         subType.setId("1");
-        subType.setValue(SubType.EnumSubType.NORMAL);
+        subType.setValue(EnumSubType.NORMAL);
+        SubTypeUpdateRequest request = new SubTypeUpdateRequest();
+        request.setId("123");
+        request.setValue(EnumSubType.VIP);
 
-        when(subTypeService.findById("1")).thenReturn(Mono.just(subType));
+        when(subTypeService.findById(any())).thenReturn(Mono.just(subType));
         when(subTypeService.update(any(SubType.class)))
                 .thenReturn(Mono.error(new RuntimeException("DB error"))); // Simula error
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.update(subType);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.update(request);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable ->
@@ -147,11 +175,14 @@ class SubTypeControllerTest {
 
         SubType subType = new SubType();
         subType.setId("999");
-        subType.setValue(SubType.EnumSubType.PYME);
+        subType.setValue(EnumSubType.PYME);
+        SubTypeUpdateRequest request = new SubTypeUpdateRequest();
+        request.setId("999");
+        request.setValue(EnumSubType.VIP);
 
-        when(subTypeService.findById("999")).thenReturn(Mono.empty());
+        when(subTypeService.findById(any())).thenReturn(Mono.empty());
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.update(subType);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.update(request);
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
@@ -165,7 +196,7 @@ class SubTypeControllerTest {
     @DisplayName("Return NoContent When Delete SubType Exists")
     void returnNoContentWhenDeleteSubTypeExists() {
         String id = "123";
-        when(subTypeService.delete(id)).thenReturn(Mono.just(true));
+        when(subTypeService.delete(any())).thenReturn(Mono.just(true));
 
         Mono<ResponseEntity<Void>> result = subTypeController.delete(id);
 
@@ -181,7 +212,7 @@ class SubTypeControllerTest {
     void returnNotFoundWhenDeleteSubType() {
 
         String id = "999";
-        when(subTypeService.delete(id)).thenReturn(Mono.just(false));
+        when(subTypeService.delete(any())).thenReturn(Mono.just(false));
 
         Mono<ResponseEntity<Void>> result = subTypeController.delete(id);
 
@@ -197,7 +228,7 @@ class SubTypeControllerTest {
     void returnInternalServerErrorWhenErrorOccurs() {
 
         String id = "500";
-        when(subTypeService.delete(id))
+        when(subTypeService.delete(any()))
                 .thenReturn(Mono.error(new RuntimeException("DB error")));
 
         Mono<ResponseEntity<Void>> result = subTypeController.delete(id);
@@ -215,11 +246,11 @@ class SubTypeControllerTest {
 
         SubType s1 = new SubType();
         s1.setId("1");
-        s1.setValue(SubType.EnumSubType.NORMAL);
+        s1.setValue(EnumSubType.NORMAL);
 
         SubType s2 = new SubType();
         s2.setId("2");
-        s2.setValue(SubType.EnumSubType.VIP);
+        s2.setValue(EnumSubType.VIP);
 
         when(subTypeService.findAll())
                 .thenReturn(Flux.fromIterable(List.of(s1, s2)));
@@ -227,8 +258,8 @@ class SubTypeControllerTest {
         Flux<SubType> result = subTypeController.list();
 
         StepVerifier.create(result)
-                .expectNextMatches(st -> st.getId().equals("1") && st.getValue() == SubType.EnumSubType.NORMAL)
-                .expectNextMatches(st -> st.getId().equals("2") && st.getValue() == SubType.EnumSubType.VIP)
+                .expectNextMatches(st -> st.getId().equals("1") && st.getValue() == EnumSubType.NORMAL)
+                .expectNextMatches(st -> st.getId().equals("2") && st.getValue() == EnumSubType.VIP)
                 .verifyComplete();
     }
 
@@ -248,7 +279,7 @@ class SubTypeControllerTest {
     @Test
     @DisplayName("Return Bad Request When Id Is Blank")
     void returnBadRequestWhenIdIsBlank() {
-        Mono<ResponseEntity<SubType>> result = subTypeController.findById("   ");
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.findById("   ");
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
@@ -264,18 +295,23 @@ class SubTypeControllerTest {
         String id = "123";
         SubType subType = new SubType();
         subType.setId(id);
-        subType.setValue(SubType.EnumSubType.VIP);
+        subType.setValue(EnumSubType.VIP);
 
-        when(subTypeService.findById(id)).thenReturn(Mono.just(subType));
+        when(subTypeService.findById(anyString())).thenReturn(Mono.just(subType));
+        when(subTypeMapper.toSubTypeResponse(any()))
+                .thenReturn(SubTypeResponse.builder()
+                        .id("123")
+                        .value("VIP")
+                        .build());
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.findById(id);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.findById(id);
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
                         response.getStatusCode() == HttpStatus.OK &&
                                 response.getBody() != null &&
-                                response.getBody().getId().equals(id) &&
-                                response.getBody().getValue() == SubType.EnumSubType.VIP
+                                "123".equals(response.getBody().getId()) &&
+                                "VIP".equals(response.getBody().getValue())
                 )
                 .verifyComplete();
     }
@@ -284,9 +320,9 @@ class SubTypeControllerTest {
     @DisplayName("Return Not Found When Not Exist Find By Id")
     void returnNotFoundWhenNotExistFindById() {
         String id = "999";
-        when(subTypeService.findById(id)).thenReturn(Mono.empty());
+        when(subTypeService.findById(any())).thenReturn(Mono.empty());
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.findById(id);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.findById(id);
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
@@ -300,10 +336,10 @@ class SubTypeControllerTest {
     @DisplayName("Return Internal Server Error When Error Occurs FindById")
     void returnInternalServerErrorWhenErrorOccursFindById() {
         String id = "500";
-        when(subTypeService.findById(id))
+        when(subTypeService.findById(any()))
                 .thenReturn(Mono.error(new RuntimeException("DB error")));
 
-        Mono<ResponseEntity<SubType>> result = subTypeController.findById(id);
+        Mono<ResponseEntity<SubTypeResponse>> result = subTypeController.findById(id);
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->

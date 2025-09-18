@@ -1,40 +1,39 @@
 package com.dataprogramming.profile.service.impl;
 
+import com.dataprogramming.profile.entity.CustomerType;
 import com.dataprogramming.profile.entity.SubType;
-import com.dataprogramming.profile.entity.TypeCustomer;
 import com.dataprogramming.profile.repository.TypeCustomerRepository;
-import com.dataprogramming.profile.service.TypeCustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.dataprogramming.profile.service.CustomerTypeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-public class TypeCustomerServiceImpl implements TypeCustomerService {
+@RequiredArgsConstructor
+public class CustomerTypeServiceImpl implements CustomerTypeService {
 
-    @Autowired
-    TypeCustomerRepository typeCustomerRepository;
+    private final TypeCustomerRepository typeCustomerRepository;
 
-    @Autowired
-    SubTypeServiceImpl subTypeServiceImpl;
+    private final SubTypeServiceImpl subTypeServiceImpl;
 
     @Override
-    public Mono<TypeCustomer> create(TypeCustomer typeCustomer) {
+    public Mono<CustomerType> create(CustomerType typeCustomer) {
         return typeCustomerRepository.save(typeCustomer);
     }
 
     @Override
-    public Flux<TypeCustomer> findAll() {
+    public Flux<CustomerType> findAll() {
         return typeCustomerRepository.findAll();
     }
 
     @Override
-    public Mono<TypeCustomer> findById(String id) {
+    public Mono<CustomerType> findById(String id) {
         return typeCustomerRepository.findById(id);
     }
 
     @Override
-    public Mono<TypeCustomer> update(TypeCustomer typeCustomer) {
+    public Mono<CustomerType> update(CustomerType typeCustomer) {
         return typeCustomerRepository.save(typeCustomer);
     }
 

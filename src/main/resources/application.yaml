@@ -3,15 +3,48 @@ spring:
     name: "profile"
   data:
     mongodb:
-      # Add ?authSource=admin to specify the authentication database
-      #uri: mongodb://admin:secret@mongo-server:27017/ms-customer?authSource=admin
-      host: localhost # used to connect container mongo db
-      #host: mongo-server
+      #host: localhost # used to connect container mongo db
+      host: mongo-server
       port: 27017
       username: admin
       password: secret
       database: ms-customer
       authentication-database: admin
 
+# Actuator + Prometheus + Tracing
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0   # 1.0 = 100% de trazas (ajusta en prod)
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+      #endpoint: http://localhost:9411/api/v2/spans
+
 server:
-  port: 8071
+  port: 8011
+
+logging:
+  level:
+    root: INFO
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.mongodb.driver: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG

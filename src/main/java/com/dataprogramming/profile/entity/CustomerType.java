@@ -1,5 +1,6 @@
 package com.dataprogramming.profile.entity;
 
+import com.dataprogramming.profile.model.EnumCustomerType;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,15 +16,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("TypeCustomer")
 @AllArgsConstructor
 @NoArgsConstructor
-public class TypeCustomer {
+public class CustomerType {
     @Id
     private String id;
     @Valid
-    private EnumTypeCustomer value;
+    private EnumCustomerType value;
 
     private SubType subType;
 
-    public enum EnumTypeCustomer {
-        BUSINESS, PERSONAL
-    }
 }

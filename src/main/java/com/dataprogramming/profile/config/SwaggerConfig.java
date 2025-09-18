@@ -30,7 +30,7 @@ import org.springframework.http.HttpHeaders;
         servers = {
                 @Server(
                         description = "DEV SERVER",
-                        url = "http://localhost:8071"
+                        url = "http://localhost:8011"
                 )
         },
         security = @SecurityRequirement(
