@@ -33,7 +33,7 @@
 		<sonar.projectName>SpringApp</sonar.projectName>
 		<sonar.host.url>http://localhost:9000</sonar.host.url>
 		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-		<sonar.minimum.coverage>0.45</sonar.minimum.coverage>
+		<sonar.minimum.coverage>0.90</sonar.minimum.coverage>
 		<sonar.coverage.exclusions>
 			**/com/dataprogramming/profile/config/SwaggerConfig.*,
 			**/com/dataprogramming/profile/entity/**,
@@ -238,6 +238,12 @@
 									</excludes>
 								</rule>
 							</rules>
+							<excludes>
+								<exclude>**/com/dataprogramming/profile/config/*</exclude>
+								<exclude>**/com/dataprogramming/profile/entity/*</exclude>
+								<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
+								<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>
