@@ -4,7 +4,10 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
+import com.dataprogramming.profile.dto.SubTypeRequest;
 import com.dataprogramming.profile.entity.SubType;
+import com.dataprogramming.profile.mapper.SubTypeMapper;
+import com.dataprogramming.profile.model.EnumSubType;
 import com.dataprogramming.profile.repository.SubTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,11 +24,14 @@ import reactor.test.StepVerifier;
 @ExtendWith(MockitoExtension.class)
 class SubTypeServiceImplTest {
 
+    @InjectMocks
+    private SubTypeServiceImpl subTypeService;
+
     @Mock
     private SubTypeRepository subTypeRepository;
 
-    @InjectMocks
-    private SubTypeServiceImpl subTypeService;
+    @Mock
+    private SubTypeMapper subTypeMapper;
 
     private SubType subType;
 
@@ -33,16 +39,21 @@ class SubTypeServiceImplTest {
     void setUp() {
         subType = new SubType();
         subType.setId("1");
-        subType.setValue(SubType.EnumSubType.NORMAL);
+        subType.setValue(EnumSubType.NORMAL);
     }
 
     @Test
     @DisplayName("Return Successful When Create SubTypeService")
     void returnSuccessfulWhenCreateSubTypeService() {
 
+        when(subTypeMapper.toSubType(any())).thenReturn(subType);
+
         when(subTypeRepository.save(any(SubType.class))).thenReturn(Mono.just(subType));
 
-        StepVerifier.create(subTypeService.create(subType))
+        SubTypeRequest input = new SubTypeRequest();
+        input.setValue(EnumSubType.VIP);
+
+        StepVerifier.create(subTypeService.create(input))
                 .expectNext(subType)
                 .verifyComplete();
     }

@@ -1,21 +1,25 @@
 package com.dataprogramming.profile.service.impl;
 
+import com.dataprogramming.profile.dto.SubTypeRequest;
 import com.dataprogramming.profile.entity.SubType;
+import com.dataprogramming.profile.mapper.SubTypeMapper;
 import com.dataprogramming.profile.repository.SubTypeRepository;
 import com.dataprogramming.profile.service.SubTypeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class SubTypeServiceImpl implements SubTypeService {
 
-    @Autowired
-    private SubTypeRepository subTypeRepository;
+    private final SubTypeRepository subTypeRepository;
+    private final SubTypeMapper subTypeMapper;
 
     @Override
-    public Mono<SubType> create(SubType subType) {
+    public Mono<SubType> create(SubTypeRequest subTypeRequest) {
+        SubType subType = subTypeMapper.toSubType(subTypeRequest);
         return subTypeRepository.save(subType);
     }
 

@@ -1,10 +1,13 @@
 package com.dataprogramming.profile.controller;
 
-import com.dataprogramming.profile.entity.TypeCustomer;
-import com.dataprogramming.profile.service.TypeCustomerService;
+import com.dataprogramming.profile.dto.CustomerTypeRequest;
+import com.dataprogramming.profile.dto.CustomerTypeResponse;
+import com.dataprogramming.profile.dto.CustomerTypeUpdateRequest;
+import com.dataprogramming.profile.mapper.CustomerTypeMapper;
+import com.dataprogramming.profile.service.CustomerTypeService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,28 +19,35 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @RefreshScope
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/typeCustomer")
 public class TypeCustomerController {
 
-    @Autowired
-    private TypeCustomerService typeCustomerService;
+    private final CustomerTypeService typeCustomerService;
+    private final CustomerTypeMapper customerTypeMapper;
 
     @GetMapping("/list")
-    public Flux<TypeCustomer> list(){
-        return typeCustomerService.findAll();
+    public Flux<CustomerTypeResponse> list(){
+        return typeCustomerService.findAll()
+                .map(customerTypeMapper::toTypeCustomerResponse)
+                .doOnSubscribe(subscription -> log.info("Starting to fetch all TypeCustomers"))
+                .doOnComplete(() -> log.info("Completed fetching all TypeCustomers"))
+                .doOnError(throwable -> log.error("Error occurred while fetching TypeCustomers:", throwable));
     }
 
     @GetMapping("/find/{id}")
-    public Mono<ResponseEntity<TypeCustomer>> findById(@PathVariable String id){
+    public Mono<ResponseEntity<CustomerTypeResponse>> findById(@PathVariable String id){
 
         if (!StringUtils.hasText(id)) {
             return Mono.just(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
         }
 
         return typeCustomerService.findById(id)
+                .map(customerTypeMapper::toTypeCustomerResponse)
                 .map(subType -> new ResponseEntity<>(subType, HttpStatus.OK))
                 .switchIfEmpty(Mono.just(new ResponseEntity<>(HttpStatus.NOT_FOUND)))
-                .doOnSuccess(response -> log.info("Find operation successful with status: {}", response.getStatusCode()))
+                .doOnSuccess(response ->
+                        log.info("Find operation successful with status: {}", response.getStatusCode()))
                 .onErrorResume(throwable -> {
                     log.error("Error during find operation:", throwable);
                     return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -45,21 +55,21 @@ public class TypeCustomerController {
     }
 
     @PostMapping("/create")
-    public Mono<ResponseEntity<TypeCustomer>> create(@RequestBody TypeCustomer typeCustomer){
-        return typeCustomerService.checkSubType(typeCustomer.getSubType().getId())
+    public Mono<ResponseEntity<CustomerTypeResponse>> create(@RequestBody CustomerTypeRequest typeCustomerRequest){
+        return typeCustomerService.checkSubType(typeCustomerRequest.getSubType().getId())
                 .flatMap(subType -> {
-                    System.out.println("subType : " + subType.getValue());
-                    typeCustomer.setSubType(subType);
-                    System.out.println(typeCustomer);
-                    return typeCustomerService.create(typeCustomer)
+                    typeCustomerRequest.setSubType(subType);
+                    return typeCustomerService.create(customerTypeMapper.toCustomerType(typeCustomerRequest))
+                            .map(customerTypeMapper::toTypeCustomerResponse)
                             .map(tc -> new ResponseEntity<>(tc , HttpStatus.CREATED));
                 })
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PutMapping("/update")
-    public Mono<ResponseEntity<TypeCustomer>> update(@Valid @RequestBody TypeCustomer typeCustomer) {
-        return typeCustomerService.update(typeCustomer)
+    public Mono<ResponseEntity<CustomerTypeResponse>> update(@Valid @RequestBody CustomerTypeUpdateRequest request) {
+        return typeCustomerService.update(customerTypeMapper.toCustomerTypeUpdate(request))
+                .map(customerTypeMapper::toTypeCustomerResponse)
                 .map(savedCustomer -> new ResponseEntity<>(savedCustomer, HttpStatus.CREATED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -68,14 +78,15 @@ public class TypeCustomerController {
     public Mono<ResponseEntity<Void>> delete(@PathVariable String id) {
         return typeCustomerService.delete(id)
                 .flatMap(isDeleted -> {
-                    if (isDeleted) {
+                    if (Boolean.TRUE.equals(isDeleted)) {
                         return Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT));
                     } else {
                         log.warn("not find object for delete");
                         return Mono.just(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
                     }
                 })
-                .doOnSuccess(responseEntity -> log.info("subType delete completed with status: {}", responseEntity.getStatusCode()))
+                .doOnSuccess(responseEntity ->
+                        log.info("subType delete completed with status: {}", responseEntity.getStatusCode()))
                 .onErrorResume(throwable -> {
                     log.error("Error during delete operation: ", throwable);
                     return Mono.just(new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR));

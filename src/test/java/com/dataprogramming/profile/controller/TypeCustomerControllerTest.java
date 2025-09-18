@@ -7,9 +7,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.dataprogramming.profile.dto.CustomerTypeRequest;
+import com.dataprogramming.profile.dto.CustomerTypeResponse;
+import com.dataprogramming.profile.dto.CustomerTypeUpdateRequest;
+import com.dataprogramming.profile.entity.CustomerType;
 import com.dataprogramming.profile.entity.SubType;
-import com.dataprogramming.profile.entity.TypeCustomer;
-import com.dataprogramming.profile.service.TypeCustomerService;
+import com.dataprogramming.profile.mapper.CustomerTypeMapper;
+import com.dataprogramming.profile.model.EnumSubType;
+import com.dataprogramming.profile.model.EnumCustomerType;
+import com.dataprogramming.profile.service.CustomerTypeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +29,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Objects;
+
 @ExtendWith(MockitoExtension.class)
 class TypeCustomerControllerTest {
 
@@ -30,26 +38,36 @@ class TypeCustomerControllerTest {
     private TypeCustomerController typeCustomerController;
 
     @Mock
-    private TypeCustomerService typeCustomerService;
+    private CustomerTypeService typeCustomerService;
 
-    private TypeCustomer customer;
+    @Mock
+    private CustomerTypeMapper customerTypeMapper;
+
+    private CustomerType customer;
 
     @BeforeEach
     void setUp() {
-        customer = new TypeCustomer();
+        customer = new CustomerType();
         customer.setId("1");
-        customer.setValue(TypeCustomer.EnumTypeCustomer.BUSINESS);
+        customer.setValue(EnumCustomerType.BUSINESS);
     }
 
     @Test
     @DisplayName("Return Successful When List TypeCustomers")
     void returnSuccessfulWhenListTypeCustomers() {
-        when(typeCustomerService.findAll()).thenReturn(Flux.just(customer));
 
-        Flux<TypeCustomer> result = typeCustomerController.list();
+        CustomerTypeResponse customerResponse = CustomerTypeResponse.builder()
+                .id("1")
+                .value(EnumCustomerType.BUSINESS.name())
+                .subType(null)
+                .build();
+        when(typeCustomerService.findAll()).thenReturn(Flux.just(customer));
+        when(customerTypeMapper.toTypeCustomerResponse(any())).thenReturn(customerResponse);
+
+        Flux<CustomerTypeResponse> result = typeCustomerController.list();
 
         StepVerifier.create(result)
-                .expectNext(customer)
+                .expectNext(customerResponse)
                 .verifyComplete();
 
         verify(typeCustomerService, times(1)).findAll();
@@ -58,23 +76,30 @@ class TypeCustomerControllerTest {
     @Test
     @DisplayName("Return Successful When FindById")
     void returnSuccessfulWhenFindById() {
-        when(typeCustomerService.findById("1")).thenReturn(Mono.just(customer));
+        when(typeCustomerService.findById(anyString())).thenReturn(Mono.just(customer));
+        CustomerTypeResponse customerResponse = CustomerTypeResponse.builder()
+                .id("1")
+                .value(EnumCustomerType.BUSINESS.name())
+                .subType(null)
+                .build();
+        when(customerTypeMapper.toTypeCustomerResponse(any())).thenReturn(customerResponse);
 
-        Mono<ResponseEntity<TypeCustomer>> result = typeCustomerController.findById("1");
+        Mono<ResponseEntity<CustomerTypeResponse>> result = typeCustomerController.findById("1");
 
         StepVerifier.create(result)
                 .expectNextMatches(response ->
                         response.getStatusCode() == HttpStatus.OK &&
-                                response.getBody().equals(customer))
+                                Objects.equals(response.getBody(), customerResponse))
                 .verifyComplete();
 
-        verify(typeCustomerService, times(1)).findById("1");
+        verify(typeCustomerService, times(1)).findById(anyString());
     }
 
     @Test
     @DisplayName("Return BadRequest When Find By Id With Empty Id")
     void returnBadRequestWhenFindByIdWithEmptyId() {
-        Mono<ResponseEntity<TypeCustomer>> result = typeCustomerController.findById("");
+
+        Mono<ResponseEntity<CustomerTypeResponse>> result = typeCustomerController.findById("");
 
         StepVerifier.create(result)
                 .expectNextMatches(response -> response.getStatusCode() == HttpStatus.BAD_REQUEST)
@@ -86,23 +111,23 @@ class TypeCustomerControllerTest {
     @Test
     @DisplayName("Return Not Found When Find By Id Does  NotExist")
     void returnNotFoundWhenFindByIdDoesNotExist() {
-        when(typeCustomerService.findById("99")).thenReturn(Mono.empty());
+        when(typeCustomerService.findById(anyString())).thenReturn(Mono.empty());
 
-        Mono<ResponseEntity<TypeCustomer>> result = typeCustomerController.findById("99");
+        Mono<ResponseEntity<CustomerTypeResponse>> result = typeCustomerController.findById("99");
 
         StepVerifier.create(result)
                 .expectNextMatches(response -> response.getStatusCode() == HttpStatus.NOT_FOUND)
                 .verifyComplete();
 
-        verify(typeCustomerService, times(1)).findById("99");
+        verify(typeCustomerService, times(1)).findById(anyString());
     }
 
     @Test
     @DisplayName("Return Internal Server Error When Find By Id Throws Exception")
     void returnInternalServerErrorWhenFindByIdThrowsException() {
-        when(typeCustomerService.findById("1")).thenReturn(Mono.error(new RuntimeException("DB error")));
+        when(typeCustomerService.findById(anyString())).thenReturn(Mono.error(new RuntimeException("DB error")));
 
-        Mono<ResponseEntity<TypeCustomer>> result = typeCustomerController.findById("1");
+        Mono<ResponseEntity<CustomerTypeResponse>> result = typeCustomerController.findById("1");
 
         StepVerifier.create(result)
                 .expectNextMatches(response -> response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR)
@@ -114,16 +139,28 @@ class TypeCustomerControllerTest {
     @Test
     @DisplayName("Return Created When Create TypeCustomer With Valid SubType")
     void returnCreatedWhenCreateTypeCustomerWithValidSubType() {
-        SubType mockSubType = new SubType("1", SubType.EnumSubType.PYME);
-        TypeCustomer mockCustomer = new TypeCustomer();
+        SubType mockSubType = new SubType("1", EnumSubType.PYME);
+        CustomerType mockCustomer = new CustomerType();
         mockCustomer.setId("123");
-        mockCustomer.setValue(TypeCustomer.EnumTypeCustomer.PERSONAL);
+        mockCustomer.setValue(EnumCustomerType.PERSONAL);
         mockCustomer.setSubType(mockSubType);
 
-        when(typeCustomerService.checkSubType("1")).thenReturn(Mono.just(mockSubType));
-        when(typeCustomerService.create(any(TypeCustomer.class))).thenReturn(Mono.just(mockCustomer));
+        CustomerTypeRequest request = CustomerTypeRequest.builder()
+                .value("PERSONAL")
+                .subType(mockSubType)
+                .build();
 
-        Mono<ResponseEntity<TypeCustomer>> response = typeCustomerController.create(mockCustomer);
+        when(customerTypeMapper.toCustomerType(any(CustomerTypeRequest.class))).thenReturn(mockCustomer);
+        when(customerTypeMapper.toTypeCustomerResponse(any(CustomerType.class)))
+                .thenReturn(CustomerTypeResponse.builder()
+                        .id("123")
+                        .value(EnumCustomerType.PERSONAL.name())
+                        .subType(null)
+                        .build());
+        when(typeCustomerService.checkSubType("1")).thenReturn(Mono.just(mockSubType));
+        when(typeCustomerService.create(any(CustomerType.class))).thenReturn(Mono.just(mockCustomer));
+
+        Mono<ResponseEntity<CustomerTypeResponse>> response = typeCustomerController.create(request);
 
         StepVerifier.create(response)
                 .expectNextMatches(r -> r.getStatusCode() == HttpStatus.CREATED && r.getBody() != null)
@@ -133,45 +170,72 @@ class TypeCustomerControllerTest {
     @Test
     @DisplayName("Return NotFound When Create TypeCustomer With Invalid SubType")
     void returnNotFoundWhenCreateTypeCustomerWithInvalidSubType() {
-        TypeCustomer mockCustomer = new TypeCustomer();
-        SubType invalidSubType = new SubType("999", SubType.EnumSubType.PYME);
+        CustomerType mockCustomer = new CustomerType();
+        SubType invalidSubType = new SubType("999", EnumSubType.PYME);
         mockCustomer.setSubType(invalidSubType);
 
-        when(typeCustomerService.checkSubType("999")).thenReturn(Mono.empty());
+        SubType mockSubType = new SubType("1", EnumSubType.PYME);
+        CustomerTypeRequest request = CustomerTypeRequest.builder()
+                .value("PERSONAL")
+                .subType(mockSubType)
+                .build();
 
-        Mono<ResponseEntity<TypeCustomer>> response = typeCustomerController.create(mockCustomer);
+        when(typeCustomerService.checkSubType(anyString())).thenReturn(Mono.empty());
+
+        Mono<ResponseEntity<CustomerTypeResponse>> response = typeCustomerController.create(request);
 
         StepVerifier.create(response)
                 .expectNextMatches(r -> r.getStatusCode() == HttpStatus.NOT_FOUND)
                 .verifyComplete();
     }
 
-    // 🔹 UPDATE TESTS
     @Test
     @DisplayName("Return Created When Update Existing TypeCustomer")
     void returnCreatedWhenUpdateExistingTypeCustomer() {
-        TypeCustomer mockCustomer = new TypeCustomer();
+        CustomerType mockCustomer = new CustomerType();
         mockCustomer.setId("123");
-        mockCustomer.setValue(TypeCustomer.EnumTypeCustomer.BUSINESS);
+        mockCustomer.setValue(EnumCustomerType.BUSINESS);
 
-        when(typeCustomerService.update(any(TypeCustomer.class))).thenReturn(Mono.just(mockCustomer));
+        CustomerTypeUpdateRequest request = CustomerTypeUpdateRequest.builder()
+                .id("123")
+                .value("BUSINESS")
+                .build();
+        CustomerTypeResponse customerTypeResponse = CustomerTypeResponse.builder()
+                .id("123")
+                .value(EnumCustomerType.BUSINESS.name())
+                .build();
 
-        Mono<ResponseEntity<TypeCustomer>> response = typeCustomerController.update(mockCustomer);
+        when(customerTypeMapper.toCustomerTypeUpdate(any(CustomerTypeUpdateRequest.class))).thenReturn(mockCustomer);
+        when(customerTypeMapper.toTypeCustomerResponse(any(CustomerType.class)))
+                .thenReturn(customerTypeResponse);
+
+        when(typeCustomerService.update(any(CustomerType.class))).thenReturn(Mono.just(mockCustomer));
+
+        Mono<ResponseEntity<CustomerTypeResponse>> response = typeCustomerController.update(request);
 
         StepVerifier.create(response)
-                .expectNextMatches(r -> r.getStatusCode() == HttpStatus.CREATED && r.getBody().equals(mockCustomer))
+                .expectNextMatches(r ->
+                        r.getStatusCode() == HttpStatus.CREATED && r.getBody().equals(customerTypeResponse))
                 .verifyComplete();
     }
 
     @Test
     @DisplayName("Return NotFound When Update NonExisting TypeCustomer")
     void returnNotFoundWhenUpdateNonExistingTypeCustomer() {
-        TypeCustomer mockCustomer = new TypeCustomer();
+        CustomerType mockCustomer = new CustomerType();
         mockCustomer.setId("999");
 
-        when(typeCustomerService.update(any(TypeCustomer.class))).thenReturn(Mono.empty());
+        CustomerTypeUpdateRequest request = CustomerTypeUpdateRequest.builder()
+                .id("123")
+                .value("BUSINESS")
+                .subType(null)
+                .build();
 
-        Mono<ResponseEntity<TypeCustomer>> response = typeCustomerController.update(mockCustomer);
+        when(customerTypeMapper.toCustomerTypeUpdate(any(CustomerTypeUpdateRequest.class))).thenReturn(mockCustomer);
+
+        when(typeCustomerService.update(any(CustomerType.class))).thenReturn(Mono.empty());
+
+        Mono<ResponseEntity<CustomerTypeResponse>> response = typeCustomerController.update(request);
 
         StepVerifier.create(response)
                 .expectNextMatches(r -> r.getStatusCode() == HttpStatus.NOT_FOUND)
