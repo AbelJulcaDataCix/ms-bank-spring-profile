@@ -1,0 +1,150 @@
+pipeline {
+    agent any
+
+    environment {
+        SONARQUBE_ENV   = 'sonar-local'
+        SONAR_PROJECT   = 'spring-boot-app-bank-spring-profile'
+        SONAR_PROJECT_NAME   = 'app-bank-spring-profile'
+        SONAR_HOST_URL  = 'http://sonarqube:9000'
+        SONAR_AUTH_TOKEN = credentials('sonar-token')
+        GIT_CREDENTIALS = 'git-credentials'
+        GIT_REPO = 'https://github.com/AbelJulcaDataCix/ms-bank-spring-profile.git'
+    }
+
+    tools {
+        maven 'Maven3'
+        jdk 'JDK17'
+    }
+
+    stages {
+        stage('Checkout develop') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/develop']],
+                    userRemoteConfigs: [[
+                        url: "${GIT_REPO}",
+                        credentialsId: "${GIT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
+
+        stage('Merge develop -> main') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${GIT_CREDENTIALS}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh '''
+                        git config user.email "jenkins@ci.com"
+                        git config user.name "Jenkins CI"
+
+                        git fetch origin
+                        git checkout main
+                        git pull origin main
+                        git merge origin/develop --no-ff -m "Auto merge develop -> main by Jenkins"
+
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/AbelJulcaDataCix/ms-bank-spring-security.git main
+                    '''
+                }
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Unit Tests with Coverage') {
+            steps {
+                sh 'mvn test jacoco:report'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                    sh """
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=${SONAR_PROJECT} \
+                          -Dsonar.projectName=${SONAR_PROJECT_NAME} \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.login=${SONAR_AUTH_TOKEN}
+                    """
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                script {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn package -DskipTests'
+            }
+        }
+
+        stage('Build & Deploy Docker Container') {
+            steps {
+                script {
+                    // Extraer version del pom.xml
+                    def imageTag = sh(
+                        script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//'",
+                        returnStdout: true
+                    ).trim()
+
+                    def imageName = "ms-spring-boot-app-bank-profile"
+                    def containName = "cn-ms-spring-boot-app-bank-profile"
+
+                    // Leer puerto de application.* (yaml o properties)
+                    def appPort = sh(
+                        script: """
+                            if [ -f src/main/resources/application.yml ]; then
+                                grep -A1 '^server:' src/main/resources/application.yml | grep port | awk '{print \$2}'
+                            elif [ -f src/main/resources/application.yaml ]; then
+                                grep -A1 '^server:' src/main/resources/application.yaml | grep port | awk '{print \$2}'
+                            elif [ -f src/main/resources/application.properties ]; then
+                                grep '^server.port' src/main/resources/application.properties | cut -d '=' -f2
+                            else
+                                echo 8080
+                            fi
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    echo "📦 Construyendo imagen Docker: ${imageName}:${imageTag}"
+                    sh "docker build -t ${imageName}:${imageTag} ."
+
+                    echo "🛑 Eliminando contenedor viejo si existe..."
+                    sh "docker rm -f ${containName} || true"
+
+                    echo "🚀 Levantando nuevo contenedor en puerto ${appPort}"
+                    sh "docker run -d --rm --name ${containName} --network ms-bank-spring-boot -p ${appPort}:${appPort} ${imageName}:${imageTag}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build completado con éxito. Microservicio desplegado en Docker."
+        }
+        failure {
+            echo "❌ Falló el pipeline"
+        }
+    }
+}

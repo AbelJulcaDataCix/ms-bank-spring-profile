@@ -1,26 +1,30 @@
-# IMAGEN MODELO
-FROM eclipse-temurin:17.0.16_8-jdk
+# ------------------------------
+# Stage 1: Build (con Maven)
+# ------------------------------
+FROM maven:3.9.8-eclipse-temurin-17 AS build
 
-# DEFINIR DIRECTORIO RAIZ DE NUESTRO CONTENEDOR
-WORKDIR /root
+WORKDIR /app
 
-# COPIAR Y PEGAR ARCHIVOS DENTRO DEL CONTENEDOR
-COPY ./pom.xml /root
-COPY ./.mvn /root/.mvn
-COPY ./mvnw /root
+# Copiar pom.xml y descargar dependencias (cacheo de dependencias)
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# DESCARGAR DEPENDENCIAS
-RUN ./mvnw dependency:go-offline
+# Copiar el código fuente y compilar
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# COPIAR EL CODIGO FUENTE DENTRO DEL CONTENEDOR
-COPY ./src /root/src
+# ------------------------------
+# Stage 2: Run (JRE slim)
+# ------------------------------
+FROM eclipse-temurin:17-jdk-jammy
 
-# CONTRUIR NUESTRA APLICACION
-RUN ./mvnw clean install
+WORKDIR /app
 
-# LEVANTAR NUESTRA APLICACION CUANDO EL CONTENEDOR INICIE
-ENTRYPOINT ["java","-jar","/root/target/profile-1.0.0-SNAPSHOT.jar"]
+# Copiar solo el jar generado del stage anterior
+COPY --from=build /app/target/*.jar app.jar
 
+# Puerto expuesto (cámbialo si tu micro cambia de puerto)
+EXPOSE 8011
 
-
-
+# Comando de ejecución
+ENTRYPOINT ["java", "-jar", "app.jar"]
