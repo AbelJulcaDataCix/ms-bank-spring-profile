@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.dataprogramming</groupId>
 	<artifactId>profile</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 	<name>profile</name>
 	<description>Microservice to management profile of client</description>
 	<url/>
@@ -37,6 +37,7 @@
 		<sonar.coverage.exclusions>
 			**/com/dataprogramming/profile/config/SwaggerConfig.*,
 			**/com/dataprogramming/profile/entity/**,
+			**/com/dataprogramming/profile/mapper/**,
 			**/com/dataprogramming/profile/ProfileApplication.*
 		</sonar.coverage.exclusions>
 	</properties>
@@ -206,6 +207,7 @@
 							<excludes>
 								<exclude>**/com/dataprogramming/profile/config/*</exclude>
 								<exclude>**/com/dataprogramming/profile/entity/*</exclude>
+								<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
 								<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
 							</excludes>
 						</configuration>
@@ -231,6 +233,7 @@
 									<excludes>
 										<exclude>**/com/dataprogramming/profile/config/*</exclude>
 										<exclude>**/com/dataprogramming/profile/entity/*</exclude>
+										<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
 										<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
 									</excludes>
 								</rule>
