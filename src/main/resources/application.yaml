@@ -3,8 +3,8 @@ spring:
     name: "profile"
   data:
     mongodb:
-      host: localhost # used to connect container mongo db
-      #host: mongo-server
+      #host: localhost # used to connect container mongo db
+      host: mongo-server
       port: 27017
       username: admin
       password: secret
