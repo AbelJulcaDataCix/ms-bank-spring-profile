@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.dataprogramming</groupId>
 	<artifactId>profile</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>profile</name>
 	<description>Microservice to management profile of client</description>
 	<url/>
@@ -31,13 +31,13 @@
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<sonar.projectKey>SpringApp</sonar.projectKey>
 		<sonar.projectName>SpringApp</sonar.projectName>
-		<sonar.host.url>http://localhost:9000</sonar.host.url>
 		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.minimum.coverage>0.90</sonar.minimum.coverage>
 		<sonar.coverage.exclusions>
-			**/com/dataprogramming/profile/config/SwaggerConfig.*,
+			**/com/dataprogramming/profile/config/**,
 			**/com/dataprogramming/profile/entity/**,
 			**/com/dataprogramming/profile/mapper/**,
+			**/com/dataprogramming/profile/security/**,
 			**/com/dataprogramming/profile/ProfileApplication.*
 		</sonar.coverage.exclusions>
 	</properties>
@@ -208,6 +208,7 @@
 								<exclude>**/com/dataprogramming/profile/config/*</exclude>
 								<exclude>**/com/dataprogramming/profile/entity/*</exclude>
 								<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
+								<exclude>**/com/dataprogramming/profile/security/*</exclude>
 								<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
 							</excludes>
 						</configuration>
@@ -234,6 +235,7 @@
 										<exclude>**/com/dataprogramming/profile/config/*</exclude>
 										<exclude>**/com/dataprogramming/profile/entity/*</exclude>
 										<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
+										<exclude>**/com/dataprogramming/profile/security/**</exclude>
 										<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
 									</excludes>
 								</rule>
@@ -242,6 +244,7 @@
 								<exclude>**/com/dataprogramming/profile/config/*</exclude>
 								<exclude>**/com/dataprogramming/profile/entity/*</exclude>
 								<exclude>**/com/dataprogramming/profile/mapper/*</exclude>
+								<exclude>**/com/dataprogramming/profile/security/**</exclude>
 								<exclude>**/com/dataprogramming/profile/ProfileApplication*</exclude>
 							</excludes>
 						</configuration>
